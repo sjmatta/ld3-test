@@ -1,6 +1,5 @@
-import L from 'leaflet';
-import d3 from 'd3';
-import async from 'async';
+import L from 'imports?L=leaflet!exports?L!leaflet-d3-svg-overlay';
+import _ from 'lodash';
 import faker from 'faker';
 import 'leaflet/dist/leaflet.css';
 import './main.css';
@@ -13,20 +12,18 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 
 L.Icon.Default.imagePath = 'http://api.tiles.mapbox.com/mapbox.js/v1.0.0beta0.0/images';
 
-// TODO: don't assume 0, 0; use map.pixelOrigin()
-const mapSize = map.getSize();
-const svgContainer = d3.select(map.getPanes().overlayPane).append('svg')
-  .attr('width', mapSize.x)
-  .attr('height', mapSize.y);
-const g = svgContainer.append('g').attr('class', 'leaflet-zoom-hide');
-
-async.times(1000, (n, callback) => {
-  const latLng = [faker.address.latitude(), faker.address.longitude()];
-  const layerPoint = map.latLngToLayerPoint(latLng);
-  const circle = g.append('circle')
-    .attr('cx', layerPoint.x)
-    .attr('cy', layerPoint.y)
-    .attr('r', 10)
-    .attr('fill', 'red');
-  callback(null, circle);
+const data = _.times(1000, () => {
+  return [faker.address.latitude(), faker.address.longitude()];
 });
+
+const d3Overlay = L.d3SvgOverlay((selection, projection) => {
+  const updateSelection = selection.selectAll('circle').data(data);
+  updateSelection.enter()
+      .append('circle')
+      .attr('r', 10)
+      .attr('cx', d => projection.latLngToLayerPoint(d).x)
+      .attr('cy', d => projection.latLngToLayerPoint(d).y)
+      .attr('fill', 'red');
+});
+
+d3Overlay.addTo(map);
