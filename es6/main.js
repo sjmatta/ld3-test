@@ -1,5 +1,6 @@
 import L from 'imports?L=leaflet!exports?L!leaflet-d3-svg-overlay';
-import _ from 'lodash';
+import d3 from 'd3';
+import async from 'async';
 import faker from 'faker';
 import 'leaflet/dist/leaflet.css';
 import './main.css';
@@ -12,28 +13,48 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 
 L.Icon.Default.imagePath = 'http://api.tiles.mapbox.com/mapbox.js/v1.0.0beta0.0/images';
 
-const data = _.times(3000, (i) => {
-  return {
+async.times(3000, (i, callback) => {
+  callback(null, {
     id: i,
     latLng: [faker.address.latitude(), faker.address.longitude()],
-  };
+  });
+}, (err, data) => {
+  const d3Overlay = L.d3SvgOverlay((selection, projection) => {
+    const circleSize = 10;
+    const updateSelection = selection.selectAll('circle').data(data, d => d.id);
+
+    const drawCircle = (circle) => {
+      return circle
+        .attr('r', circleSize / projection.scale)
+        .attr('stroke', 'black')
+        .attr('fill', 'red')
+        .attr('pointer-events', 'all');
+    };
+
+    const drawCircleHover = (circle) => {
+      return circle
+        .attr('r', circleSize * 2 / projection.scale)
+        .attr('fill', 'purple');
+    };
+
+    // this creates new circles if the data is updated
+    const circle = updateSelection.enter().append('circle');
+    drawCircle(circle)
+      .on('mouseover', function onMouseover() {
+        drawCircleHover(d3.select(this).transition().duration(200));
+      })
+      .on('mouseout', function onMouseout() {
+        drawCircle(d3.select(this).transition().duration(200));
+      });
+    updateSelection.exit().remove();
+
+    // this updates existing circles when they need to be redrawn
+    // (if you need to react to data updates, this is the place)
+    updateSelection
+      .attr('r', circleSize / projection.scale)
+      .attr('cx', d => projection.latLngToLayerPoint(d.latLng).x)
+      .attr('cy', d => projection.latLngToLayerPoint(d.latLng).y);
+  });
+
+  d3Overlay.addTo(map);
 });
-
-const d3Overlay = L.d3SvgOverlay((selection, projection) => {
-  const updateSelection = selection.selectAll('circle').data(data, d => d.id);
-
-  // this creates new circles if the data is updated
-  updateSelection.enter().append('circle')
-    .attr('stroke', 'black')
-    .attr('fill', 'red');
-  updateSelection.exit().remove();
-
-  // this updates existing circles when they need to be redrawn
-  // (if you need to react to data updates, this is the place)
-  updateSelection
-    .attr('r', 10 / projection.scale)
-    .attr('cx', d => projection.latLngToLayerPoint(d.latLng).x)
-    .attr('cy', d => projection.latLngToLayerPoint(d.latLng).y);
-});
-
-d3Overlay.addTo(map);
