@@ -38,6 +38,7 @@ async.times(3000, (i, callback) => {
     };
 
     // this creates new circles if the data is updated
+    // using function and not ES6 fat arrow for proper `this` binding
     const circle = updateSelection.enter().append('circle');
     drawCircle(circle)
       .on('mouseover', function onMouseover() {
@@ -45,6 +46,19 @@ async.times(3000, (i, callback) => {
       })
       .on('mouseout', function onMouseout() {
         drawCircle(d3.select(this).transition().duration(200));
+      })
+      .on('click', function onClick() {
+        d3.event.stopPropagation();
+        if (!selection.selectAll('.popup').remove().size()) {
+          const point = projection.latLngToLayerPoint(d3.select(this).datum().latLng);
+          selection.append('rect').attr('class', 'popup')
+            .attr('x', point.x - 100)
+            .attr('y', point.y - 125)
+            .attr('width', 200)
+            .attr('height', 100)
+            .attr('fill', 'white')
+            .attr('stroke', 'black');
+        }
       });
     updateSelection.exit().remove();
 
