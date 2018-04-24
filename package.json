@@ -10,7 +10,7 @@
     "babel-core": "5.8.38",
     "babel-eslint": "4.1.8",
     "babel-loader": "5.4.2",
-    "css-loader": "0.21.0",
+    "css-loader": "0.28.11",
     "eslint": "1.10.3",
     "eslint-config-airbnb": "0.1.1",
     "exports-loader": "0.6.4",
