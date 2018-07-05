@@ -9,7 +9,7 @@
   "devDependencies": {
     "babel-core": "5.8.38",
     "babel-eslint": "4.1.8",
-    "babel-loader": "5.4.2",
+    "babel-loader": "7.1.5",
     "css-loader": "0.21.0",
     "eslint": "1.10.3",
     "eslint-config-airbnb": "0.1.1",
